@@ -405,14 +405,3 @@ SQLite file at `STATE_DB_PATH`. Schema is created automatically on first use.
 | `synced_guest_cards` | Legacy table from an earlier design; retained for compatibility only |
 
 ---
-
-## Known Limitations and Maintenance Notes
-
-These items were identified while documenting the code and should be reviewed by the maintainer.
-
-1. **`full_resync.py` is out of date with `app/sync.py`.** It calls `_sync_inquiry(state, ghl, user_map, guest_card)`, but that function now also requires `config`, an out-of-office cache, and pipeline information. With the current code, `--apply` runs will raise a `TypeError` for every row. The script needs to be updated to build those arguments the same way `run_sync` does (see `app/sync.py`). Until then, use `app/resync.py` for refreshing existing records, or temporarily widen the five-day window in `run_sync`.
-2. **Legacy-table utilities.** `inspect_guest_card.py` and `repair_misattributed_notes.py` read the legacy `synced_guest_cards` table, whereas the current sync writes to `synced_inquiries` and `contact_keys`. They remain useful against older databases but will not reflect recent activity.
-3. **Watermark is informational.** The guest card fetch window is a fixed rolling five days. The watermark is written after successful runs but is not used to compute the window, and `INITIAL_LOOKBACK_DAYS` is not referenced by the sync.
-4. **Hardcoded install path.** `full_resync.py`, `app/test_run.py`, `app/manage_round_robin.py`, and `app/vacancy_sync_main.py` insert `/opt/appfolio-ghl-sync` into `sys.path`. If the application is installed elsewhere, update those lines.
-5. **Vacancy property name mapping.** In `app/vacancy_mapper.py`, `property_name` is populated from the AppFolio `unit` field rather than `property_name`. Confirm this is intended.
-6. **Date handling.** The fetch window uses the server's local date, and out-of-office checks use UTC calendar days. Confirm the VPS timezone matches business expectations.
